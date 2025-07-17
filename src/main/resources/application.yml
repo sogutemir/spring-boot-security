@@ -37,4 +37,3 @@ jwt:
 
 app:
   name: Security Example App
-  frontend-url: http://localhost:3000

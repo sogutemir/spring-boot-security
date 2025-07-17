@@ -13,16 +13,16 @@ public class EmailService {
     @Value("${app.name}")
     private String appName;
     
-    @Value("${app.frontend-url}")
-    private String frontendUrl;
-    
+    @Value("${server.port:8080}")
+    private String serverPort;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
     
     public void sendVerificationEmail(User user, String token) {
-        String verificationUrl = frontendUrl + "/verify-email?token=" + token;
-        
+        String verificationUrl = "http://localhost:" + serverPort + "/api/auth/verify-email?token=" + token;
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getEmail());
         message.setSubject("Email Verification - " + appName);
