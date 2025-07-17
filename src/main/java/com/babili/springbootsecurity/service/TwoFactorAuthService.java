@@ -2,11 +2,13 @@ package com.babili.springbootsecurity.service;
 
 import com.babili.springbootsecurity.dto.TwoFactorSetupResponse;
 import com.babili.springbootsecurity.entity.User;
+import com.babili.springbootsecurity.repository.CustomCredentialRepository;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
+import com.warrenstrange.googleauth.GoogleAuthenticatorConfig;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
 import org.springframework.stereotype.Service;
@@ -16,11 +18,19 @@ import java.io.ByteArrayOutputStream;
 @Service
 public class TwoFactorAuthService {
     private static final String ISSUER = "SecurityExampleApp";
-    private final GoogleAuthenticator gAuth = new GoogleAuthenticator();
+    private final GoogleAuthenticator gAuth;
     private final UserService userService;
-    
-    public TwoFactorAuthService(UserService userService) {
+    private final CustomCredentialRepository credentialRepository;
+
+    public TwoFactorAuthService(UserService userService, CustomCredentialRepository credentialRepository) {
         this.userService = userService;
+        this.credentialRepository = credentialRepository;
+
+        // Configure GoogleAuthenticator with credential repository
+        GoogleAuthenticatorConfig config = new GoogleAuthenticatorConfig.GoogleAuthenticatorConfigBuilder()
+                .build();
+        this.gAuth = new GoogleAuthenticator(config);
+        this.gAuth.setCredentialRepository(credentialRepository);
     }
     
     public String generateSecret() {
@@ -29,8 +39,8 @@ public class TwoFactorAuthService {
     }
     
     public String generateQRUrl(String secret, String email) {
-        return GoogleAuthenticatorQRGenerator.getOtpAuthURL(ISSUER, email, 
-                gAuth.createCredentials(secret));
+        GoogleAuthenticatorKey key = new GoogleAuthenticatorKey.Builder(secret).build();
+        return GoogleAuthenticatorQRGenerator.getOtpAuthURL(ISSUER, email, key);
     }
     
     public byte[] generateQRCode(String qrUrl) throws Exception {
@@ -43,8 +53,15 @@ public class TwoFactorAuthService {
     }
     
     public boolean verifyCode(String secret, String code) {
-        String normalizedCode = code.replaceAll("\\s", "");
-        return gAuth.authorize(secret, Integer.parseInt(normalizedCode));
+        try {
+            String normalizedCode = code.replaceAll("\\s", "");
+            int codeInt = Integer.parseInt(normalizedCode);
+
+            // Use the secret directly with GoogleAuthenticator
+            return gAuth.authorize(secret, codeInt);
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
     
     // Business logic methods

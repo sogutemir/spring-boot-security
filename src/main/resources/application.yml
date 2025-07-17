@@ -31,9 +31,8 @@ spring:
           auth: true
           starttls:
             enable: true
-
 jwt:
-  secret: mySecretKey
+  secret: myVeryLongSecretKeyThatIsAtLeast64BytesLongForHS512AlgorithmToWorkProperlyAndSecurely123456789
   expiration: 86400000 # 24 hours
 
 app:

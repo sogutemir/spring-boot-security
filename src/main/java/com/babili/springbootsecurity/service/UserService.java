@@ -1,6 +1,7 @@
 package com.babili.springbootsecurity.service;
 
 import com.babili.springbootsecurity.dto.RegisterRequest;
+import com.babili.springbootsecurity.entity.Role;
 import com.babili.springbootsecurity.entity.User;
 import com.babili.springbootsecurity.exception.UserAlreadyExistsException;
 import com.babili.springbootsecurity.repository.UserRepository;
@@ -31,6 +32,7 @@ public class UserService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
+                .role(Role.USER)
                 .build();
         
         return userRepository.save(user);
